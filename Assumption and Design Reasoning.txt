@@ -1,0 +1,59 @@
+This file talks about the design, some issues in the problem and some assumptions made
+
+Responsibilities
+1) View Tables in the Restaurant 
+2) Waiters want to View Assigned Tables across multiple restaurants 
+3a) Assign Table to a Waiter 
+3b) To be able to assign the table the waiter has to be available (<=4 tables per restaurant constraint   
+
+Design:
+
+The system is designed in the view of maximising efficiency.
+
+From the domain Waiters are only associated with the Hotel not with the Restaurant. Table Class reduces coupling and also acts as the association between Restaurant and Waiter
+
+Restaurant has a list of Tables and each instance of table has the corresponding waiter. It will be easy to solve all the responsibilities using this list - but that will reduce efficiency. 
+
+For ViewTables going over the list is most efficient O(20).
+
+For View Assigned Tables we have to go through both restaurants’ table list 
+which gives us O(40). Seems really unnecessary to go over all the tables. Hence we have a HashMap of RestID to TableNums ( <Integer, Integer> ) in Waiter. That gives us an O(2) * O(<4) = O(<8)
+
+The structure of both attributes (RestID and TableNums as Integers) is highly unlikely to change over time so there isn’t coupling between Waiter and the two classes (Rest and Table).
+
+
+Another Reason for the HashMap in Waiters is 3b View Available Waiters. If we were dependent on the list of Tables in Rest for this the process would become very complicated  - we go over the list to check the no. of tables corr. to each waiter = O(20). Then excluding all the waiters unavailable from waiter list = O(8). Altogether O(28).
+
+With the HashMap in Waiter we get an O(8) (going over all the waiters) again because we just have to refer to the HashMap corr. to each waiter 
+
+We could have had a HashMap of Waiters to Tables in Restaurant but that increases the coupling between Restaurant and Waiters which does not reflect the domain diagram. It will also increase the performance time for View Tables - getting all the table assignments then sorting - O(8) * O(>=20)
+
+Assumptions: 
+
+The system right stores a single file with all the table assignments
+
+I could have easily made files for other data (restaurants, waiters, etc)
+But this was priority as it also involves persisting data. 
+
+Right now the program gives a snapshot of the day. To use this system over several days we would have to store timestamps along with the assignments to display assignments only for that particular day. 
+
+As of now the availability of the waiter is only dependent on how many tables they are assigned to - other factors could come into the picture like shifts etc.
+
+The list of the available waiters can be pruned further if the hotel assigns waiters depending on the type of tables (for example elite tables more experienced waiters will be assigned to them). Right now it is assumed that all waiters are possible candidates. 
+
+Reading and Writing files race conditions are not included
+
+There is no error checking in the program - for example if the manager forgets to select an option from one of the JLists when assigning a table. It is assumed the user is careful. 
+
+The system does not differentiate between Manager View and Waiter View. This can easily be solved with a login in system and then constraining the views that a waiter has access to but due to time constraints, I wasn’t able to implement it. 
+
+Manager and Waiter are part of a Parent Class Employee which will contain the login function (Parent Class not included)
+
+
+Further Notes: 
+
+This is the first time I implemented Views is Java. I focussed more on the design and backend. 
+
+
+
+
